@@ -17,7 +17,6 @@
         <video id="video" autoplay></video>
         <canvas id="canvas" style="display: none;"></canvas>
 
-        <!-- Filters and Frames -->
         <div class="filters">
             <label>Filter:</label>
             <select id="filter-select">
@@ -26,28 +25,28 @@
                 <option value="sepia">Sepia</option>
                 <option value="invert">Invert</option>
                 <option value="brightness">Brightness</option>
+                <option value="blur">Blur</option>
+                <option value="contrast">Contrast</option>
+                <option value="saturation">Saturation</option>
             </select>
+        </div>
 
-            <label>Frame:</label>
-            <select id="frame-select">
-                <option value="none">None</option>
-                <option value="frame1.png">Vintage Frame</option>
-                <option value="frame2.png">Birthday Frame</option>
-                <option value="frame3.png">Party Frame</option>
-            </select>
+        <div class="countdown">
+            <label>Countdown (3-10s):</label>
+            <input type="number" id="countdown-input" min="3" max="10" value="3">
         </div>
 
         <div class="controls">
             <button id="add-caption">📝 Add Caption</button>
             <button id="capture">📸 Capture</button>
             <button id="download" style="display: none;">💾 Download Strip</button>
+            <button id="reset">🔄 Reset</button>
             <button id="close-camera">❌ Close Camera</button>
         </div>
 
         <canvas id="photo-strip"></canvas>
     </div>
 
-    <!-- Floating Modal for Caption Input -->
     <div class="modal-overlay" id="modal-overlay"></div>
     <div class="modal" id="caption-modal">
         <h2>Add Your Caption</h2>
@@ -69,7 +68,7 @@
         const closeCameraBtn = document.getElementById('close-camera');
 
         const filterSelect = document.getElementById('filter-select');
-        const frameSelect = document.getElementById('frame-select');
+        const countdownInput = document.getElementById('countdown-input');
 
         const addCaptionBtn = document.getElementById('add-caption');
         const captionModal = document.getElementById('caption-modal');
@@ -79,6 +78,7 @@
         const captionInput = document.getElementById('caption-input');
 
         const downloadBtn = document.getElementById('download');
+        const resetBtn = document.getElementById('reset');
 
         let userCaption = '';
         let photos = [];
@@ -121,55 +121,69 @@
             videoElement.style.filter = getFilterStyle(filterSelect.value);
         });
 
-        // Capture Photo with Filter, Frame, Caption, and Date
+        // Capture Photo with Countdown
         const captureBtn = document.getElementById('capture');
         captureBtn.addEventListener('click', () => {
-            const date = new Date().toLocaleDateString();
+            const countdownValue = parseInt(countdownInput.value) || 3;
 
-            canvas.width = videoElement.videoWidth;
-            canvas.height = videoElement.videoHeight;
+            let countdownTimer = countdownValue;
+            const countdownInterval = setInterval(() => {
+                captureBtn.innerText = `⏳ ${countdownTimer}...`;
+                countdownTimer--;
 
-            context.filter = getFilterStyle(filterSelect.value);
-            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+                if (countdownTimer < 0) {
+                    clearInterval(countdownInterval);
 
-            // Add frame
-            const selectedFrame = frameSelect.value;
-            if (selectedFrame !== 'none') {
-                const frameImage = new Image();
-                frameImage.src = `frames/${selectedFrame}`;
-                frameImage.onload = () => context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
-            }
+                    // Capture Image
+                    const date = new Date().toLocaleDateString();
+                    canvas.width = videoElement.videoWidth;
+                    canvas.height = videoElement.videoHeight;
 
-            // Add date and caption
-            context.font = '20px Arial';
-            context.fillStyle = 'white';
-            context.fillText(date, 10, 30);
-            context.fillText(userCaption || '', 10, 60);
+                    context.filter = getFilterStyle(filterSelect.value);
+                    context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
 
-            const imgData = canvas.toDataURL('image/png');
-            photos.push(imgData);
+                    const imgData = canvas.toDataURL('image/png');
+                    photos.push({ imgData, caption: userCaption, date });
 
-            displayPhotoStrip();
+                    displayPhotoStrip();
 
-            if (photos.length >= 1) {
-                downloadBtn.style.display = 'inline-block';
-            }
+                    if (photos.length >= 1) {
+                        downloadBtn.style.display = 'inline-block';
+                    }
+
+                    captureBtn.innerText = "📸 Capture"; // Reset Button Text
+                }
+            }, 1000);
         });
 
         // Display Photo Strip
         function displayPhotoStrip() {
+            const photoHeightWithText = canvas.height + 40;
+
             photoStrip.style.display = 'block';
             photoStrip.width = canvas.width;
-            photoStrip.height = canvas.height * photos.length;
+            photoStrip.height = photoHeightWithText * photos.length;
 
-            photos.forEach((imgData, index) => {
+            photos.forEach((photo, index) => {
                 const img = new Image();
-                img.src = imgData;
-                img.onload = () => stripContext.drawImage(img, 0, canvas.height * index);
+                img.src = photo.imgData;
+                img.onload = () => {
+                    stripContext.drawImage(img, 0, photoHeightWithText * index);
+
+                    stripContext.font = '20px Arial';
+                    stripContext.fillStyle = 'white';
+                    stripContext.textAlign = 'center';
+
+                    const captionY = photoHeightWithText * index + canvas.height + 20;
+                    const dateY = captionY + 20;
+
+                    stripContext.fillText(photo.caption || 'Your Caption Here', canvas.width / 2, captionY);
+                    stripContext.fillText(photo.date, canvas.width / 2, dateY);
+                };
             });
         }
 
-        // Download Button Functionality
+        // Download Photo Strip
         downloadBtn.addEventListener('click', () => {
             const stripURL = photoStrip.toDataURL('image/png');
             const link = document.createElement('a');
@@ -178,23 +192,35 @@
             link.click();
         });
 
-        // Helper Function for Filter Effects
+        // Reset Photo Strip
+        resetBtn.addEventListener('click', () => {
+            photos = [];
+            photoStrip.style.display = 'none';
+            downloadBtn.style.display = 'none';
+            stripContext.clearRect(0, 0, photoStrip.width, photoStrip.height);
+        });
+
+        // Filter Function
         function getFilterStyle(filter) {
-            return filter === 'none' ? 'none' : `${filter}(100%)`;
+            switch (filter) {
+                case 'blur': return 'blur(5px)';
+                case 'contrast': return 'contrast(150%)';
+                case 'saturation': return 'saturate(200%)';
+                default: return filter === 'none' ? 'none' : `${filter}(100%)`;
+            }
         }
 
         // Close Camera
-closeCameraBtn.addEventListener('click', () => {
-    const stream = videoElement.srcObject;
-    if (stream) {
-        const tracks = stream.getTracks();
-        tracks.forEach(track => track.stop()); // Stops each track in the stream
-    }
+        closeCameraBtn.addEventListener('click', () => {
+            const stream = videoElement.srcObject;
+            if (stream) {
+                const tracks = stream.getTracks();
+                tracks.forEach(track => track.stop());
+            }
 
-    videoElement.srcObject = null; // Clear the video source
-    cameraContainer.style.display = 'none';
-});
-
+            videoElement.srcObject = null;
+            cameraContainer.style.display = 'none';
+        });
     </script>
 </body>
 </html>
