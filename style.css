@@ -1,0 +1,213 @@
+body {
+    font-family: 'Roboto Mono', monospace;
+    background: #f3f4f6; /* Soft gray background */
+    color: #333;
+    margin: 0;
+    padding: 0;
+    height: 100vh;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+}
+
+.hero {
+    background: #fff;
+    border-radius: 20px;
+    padding: 40px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 10px 30px rgba(0, 0, 0, 0.1);
+    text-align: center;
+}
+
+h1 {
+    font-size: 2.5rem;
+    margin-bottom: 10px;
+    color: #333;
+    font-weight: 600;
+}
+
+p {
+    font-size: 1rem;
+    color: #555;
+    margin-bottom: 20px;
+}
+
+button {
+    background: #4CAF50; /* Calming green tone */
+    color: #fff;
+    border: none;
+    padding: 12px 30px;
+    font-size: 16px;
+    font-weight: 500;
+    border-radius: 25px;
+    cursor: pointer;
+    transition: background 0.3s ease, transform 0.2s;
+}
+
+button:hover {
+    background: #45a049;
+    transform: translateY(-2px);
+}
+
+.camera-container {
+    background: #fff;
+    border-radius: 20px;
+    padding: 20px;
+    width: 90%;
+    max-width: 500px;
+    box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
+    margin-top: 20px;
+    text-align: center;
+}
+
+video, canvas {
+    width: 100%;
+    border-radius: 12px;
+    border: 2px solid #ddd;
+    margin-top: 15px;
+}
+
+.controls {
+    margin-top: 15px;
+}
+
+@keyframes fadeIn {
+    from { opacity: 0; transform: translateY(-10px); }
+    to { opacity: 1; transform: translateY(0); }
+}
+
+.hero, .camera-container {
+    animation: fadeIn 0.5s ease-in-out;
+}
+
+
+
+body {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    height: 100vh;
+    background-color: #f0f2f5;
+    font-family: Roboto Mono', monospace;
+}
+
+.hero, .camera-container {
+    background: #fff;
+    border-radius: 15px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.2);
+    padding: 20px;
+    margin-top: 20px;
+    width: 90%;
+    max-width: 500px;
+    text-align: center;
+}
+
+#video, #canvas {
+    width: 100%;
+    border-radius: 12px;
+    margin-top: 15px;
+}
+
+.controls, .filters {
+    margin-top: 10px;
+    display: flex;
+    justify-content: space-evenly;
+}
+
+select, button {
+    background-color: #4CAF50;
+    color: #fff;
+    border: none;
+    border-radius: 20px;
+    padding: 8px 20px;
+    cursor: pointer;
+}
+
+.filters select {
+    background-color: #3b82f6;
+}
+
+#photo-strip {
+    display: none;
+    border: 5px solid #333;
+    border-radius: 12px;
+    margin-top: 15px;
+    background: #fff;
+}
+
+.photo-strip {
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    padding: 20px;
+    background: #f0f0f0;
+    border: 2px solid #ddd;
+    border-radius: 10px;
+    box-shadow: 0 4px 10px rgba(0, 0, 0, 0.2);
+}
+.photo-strip img {
+    border: 3px solid #fff;
+    border-radius: 5px;
+    width: 200px;
+    height: auto;
+}
+
+ /* Floating Modal Design */
+ .modal {
+    display: none;
+    position: fixed;
+    top: 50%;
+    left: 50%;
+    transform: translate(-50%, -50%);
+    background: #fff;
+    padding: 100px;
+    border-radius: 12px;
+    box-shadow: 0 4px 15px rgba(0, 0, 0, 0.3);
+    z-index: 999;
+    width: 100%;
+    max-width: 440px;
+    text-align: center;
+}
+
+.modal h2 {
+    margin-bottom: 15px;
+}
+
+.modal input {
+    width: 100%;
+    padding: 12px;
+    margin-bottom: 10px;
+    border: 3px solid #6200ea;
+    border-radius: 8px;
+}
+
+.modal .modal-btns {
+    display: flex;
+    justify-content: space-around;
+}
+
+.modal button {
+    padding: 8px 20px;
+    border: none;
+    border-radius: 8px;
+    cursor: pointer;
+    background-color: #6200ea;
+    color: #fff;
+    transition: background 0.3s;
+}
+
+.modal button:hover {
+    background-color: #4b00b5;
+}
+
+.modal-overlay {
+    display: none;
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background: rgba(0, 0, 0, 0.6);
+    z-index: 998;
+}

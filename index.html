@@ -1,0 +1,200 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>SnapBooth</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <div class="hero">
+        <h1>📸 Welcome to <span>SnapBooth ❤️</span></h1>
+        <p>Capture and save your best moments instantly!</p>
+        <button id="start-camera">🎥 Open Camera</button>
+    </div>
+
+    <div class="camera-container" style="display: none;">
+        <video id="video" autoplay></video>
+        <canvas id="canvas" style="display: none;"></canvas>
+
+        <!-- Filters and Frames -->
+        <div class="filters">
+            <label>Filter:</label>
+            <select id="filter-select">
+                <option value="none">None</option>
+                <option value="grayscale">Grayscale</option>
+                <option value="sepia">Sepia</option>
+                <option value="invert">Invert</option>
+                <option value="brightness">Brightness</option>
+            </select>
+
+            <label>Frame:</label>
+            <select id="frame-select">
+                <option value="none">None</option>
+                <option value="frame1.png">Vintage Frame</option>
+                <option value="frame2.png">Birthday Frame</option>
+                <option value="frame3.png">Party Frame</option>
+            </select>
+        </div>
+
+        <div class="controls">
+            <button id="add-caption">📝 Add Caption</button>
+            <button id="capture">📸 Capture</button>
+            <button id="download" style="display: none;">💾 Download Strip</button>
+            <button id="close-camera">❌ Close Camera</button>
+        </div>
+
+        <canvas id="photo-strip"></canvas>
+    </div>
+
+    <!-- Floating Modal for Caption Input -->
+    <div class="modal-overlay" id="modal-overlay"></div>
+    <div class="modal" id="caption-modal">
+        <h2>Add Your Caption</h2>
+        <input type="text" id="caption-input" placeholder="Enter your caption...">
+        <div class="modal-btns">
+            <button id="save-caption">Add</button>
+            <button id="cancel-caption">Cancel</button>
+        </div>
+    </div>
+
+    <script>
+        const startCameraBtn = document.getElementById('start-camera');
+        const cameraContainer = document.querySelector('.camera-container');
+        const videoElement = document.getElementById('video');
+        const canvas = document.getElementById('canvas');
+        const context = canvas.getContext('2d');
+        const photoStrip = document.getElementById('photo-strip');
+        const stripContext = photoStrip.getContext('2d');
+        const closeCameraBtn = document.getElementById('close-camera');
+
+        const filterSelect = document.getElementById('filter-select');
+        const frameSelect = document.getElementById('frame-select');
+
+        const addCaptionBtn = document.getElementById('add-caption');
+        const captionModal = document.getElementById('caption-modal');
+        const modalOverlay = document.getElementById('modal-overlay');
+        const saveCaptionBtn = document.getElementById('save-caption');
+        const cancelCaptionBtn = document.getElementById('cancel-caption');
+        const captionInput = document.getElementById('caption-input');
+
+        const downloadBtn = document.getElementById('download');
+
+        let userCaption = '';
+        let photos = [];
+
+        // Open Camera
+        startCameraBtn.addEventListener('click', async () => {
+            cameraContainer.style.display = 'block';
+            try {
+                const stream = await navigator.mediaDevices.getUserMedia({
+                    video: { facingMode: 'user' }
+                });
+                videoElement.srcObject = stream;
+            } catch (error) {
+                alert('Camera access denied or unavailable.');
+            }
+        });
+
+        // Show Caption Modal
+        addCaptionBtn.addEventListener('click', () => {
+            captionModal.style.display = 'block';
+            modalOverlay.style.display = 'block';
+        });
+
+        // Save Caption
+        saveCaptionBtn.addEventListener('click', () => {
+            userCaption = captionInput.value.trim();
+            alert(`Caption added: "${userCaption}"`);
+            captionModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        });
+
+        // Cancel Caption
+        cancelCaptionBtn.addEventListener('click', () => {
+            captionModal.style.display = 'none';
+            modalOverlay.style.display = 'none';
+        });
+
+        // Apply Filter
+        filterSelect.addEventListener('change', () => {
+            videoElement.style.filter = getFilterStyle(filterSelect.value);
+        });
+
+        // Capture Photo with Filter, Frame, Caption, and Date
+        const captureBtn = document.getElementById('capture');
+        captureBtn.addEventListener('click', () => {
+            const date = new Date().toLocaleDateString();
+
+            canvas.width = videoElement.videoWidth;
+            canvas.height = videoElement.videoHeight;
+
+            context.filter = getFilterStyle(filterSelect.value);
+            context.drawImage(videoElement, 0, 0, canvas.width, canvas.height);
+
+            // Add frame
+            const selectedFrame = frameSelect.value;
+            if (selectedFrame !== 'none') {
+                const frameImage = new Image();
+                frameImage.src = `frames/${selectedFrame}`;
+                frameImage.onload = () => context.drawImage(frameImage, 0, 0, canvas.width, canvas.height);
+            }
+
+            // Add date and caption
+            context.font = '20px Arial';
+            context.fillStyle = 'white';
+            context.fillText(date, 10, 30);
+            context.fillText(userCaption || '', 10, 60);
+
+            const imgData = canvas.toDataURL('image/png');
+            photos.push(imgData);
+
+            displayPhotoStrip();
+
+            if (photos.length >= 1) {
+                downloadBtn.style.display = 'inline-block';
+            }
+        });
+
+        // Display Photo Strip
+        function displayPhotoStrip() {
+            photoStrip.style.display = 'block';
+            photoStrip.width = canvas.width;
+            photoStrip.height = canvas.height * photos.length;
+
+            photos.forEach((imgData, index) => {
+                const img = new Image();
+                img.src = imgData;
+                img.onload = () => stripContext.drawImage(img, 0, canvas.height * index);
+            });
+        }
+
+        // Download Button Functionality
+        downloadBtn.addEventListener('click', () => {
+            const stripURL = photoStrip.toDataURL('image/png');
+            const link = document.createElement('a');
+            link.href = stripURL;
+            link.download = 'photo_booth_strip.png';
+            link.click();
+        });
+
+        // Helper Function for Filter Effects
+        function getFilterStyle(filter) {
+            return filter === 'none' ? 'none' : `${filter}(100%)`;
+        }
+
+        // Close Camera
+closeCameraBtn.addEventListener('click', () => {
+    const stream = videoElement.srcObject;
+    if (stream) {
+        const tracks = stream.getTracks();
+        tracks.forEach(track => track.stop()); // Stops each track in the stream
+    }
+
+    videoElement.srcObject = null; // Clear the video source
+    cameraContainer.style.display = 'none';
+});
+
+    </script>
+</body>
+</html>
